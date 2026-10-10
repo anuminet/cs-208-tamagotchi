@@ -1,8 +1,8 @@
 "use strict";
-class GameRoom {
+class GameRoom extends React.Component {
     render() {
         return (
-            <main>
+            <main id="main" className="game-room">
                 <div className="bg-primary text-white">Game room</div>
                 <div className="container" id="main"></div>
                 <div className="bg-warning text-white">
@@ -41,28 +41,27 @@ class GameRoom {
         
                             <div className="modal-body">
         
-                                {/* <!-- Save slot Placeholders --> */}
         
-                                <a 
+                                <div 
                                     type="button" className="btn menu-button w-100 mb-3" 
                                     href="snake-game.html?width=10&height=10"
                                 >
                                     <p>10x10</p>
-                                </a>
+                                </div>
         
-                                <a 
+                                <div 
                                     type="button" className="btn menu-button w-100 mb-3"
                                     href="snake-game.html?width=17&height=17"
                                 >
                                     <p>17x17</p>
-                                </a>
+                                </div>
         
-                                <a 
+                                <div 
                                     type="button" className="btn menu-button w-100"
                                     href="snake-game.html?width=25&height=25"
                                 >
                                     <p>25x25</p>
-                                </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -71,12 +70,12 @@ class GameRoom {
                 {/* <!-- Flappy Goobert Button --> */}
                 <div className="row justify-content-center my-3">
                     <div className="col-3">
-                        <a
+                        <div
                             type="button"
                             className="btn bg-secondary text-white text-lg w-100"
-                            href="flappy-goobert.html">
+                            onClick={() => load("flappyGoobert")}>
                             <h1>Play Flappy Goobert</h1>
-                        </a>
+                        </div>
                     </div>
                 </div>
 

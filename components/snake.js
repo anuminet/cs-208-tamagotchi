@@ -1,8 +1,18 @@
 "use strict";
 
 class SnakeGame extends React.Component {
+  componentDidMount() {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '../games/snake-stylesheet.css';
+    document.head.appendChild(link);
+    console.log(link);
+  }
   render() {
-    return /*#__PURE__*/React.createElement("main", null, /*#__PURE__*/React.createElement("script", {
+    return /*#__PURE__*/React.createElement("main", {
+      id: "main",
+      className: "shop"
+    }, /*#__PURE__*/React.createElement("script", {
       src: "games/snake-game.js",
       defer: true
     }), /*#__PURE__*/React.createElement("div", {

@@ -1,9 +1,18 @@
 "use strict";
 
 class SnakeGame extends React.Component {
+    componentDidMount() {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '../games/snake-stylesheet.css';
+        
+        document.head.appendChild(link);
+        console.log(link);
+    }
+
     render() {
         return (
-            <main>
+            <main id="main" className="shop">
                 <script src="games/snake-game.js" defer></script>
 
                 <div id="main" className="container bg-primary"></div>

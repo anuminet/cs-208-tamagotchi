@@ -1,6 +1,8 @@
 class Bedroom extends React.Component {
   render() {
-    return /*#__PURE__*/React.createElement("main", null, /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/React.createElement("main", {
+      className: "bedroom"
+    }, /*#__PURE__*/React.createElement("div", {
       id: "wall"
     }, /*#__PURE__*/React.createElement("div", {
       className: "row"
@@ -9,7 +11,7 @@ class Bedroom extends React.Component {
     }), /*#__PURE__*/React.createElement("div", {
       className: "col-2"
     }, /*#__PURE__*/React.createElement("button", {
-      onClick: "alert('You found my secret easter egg!')",
+      onClick: () => alert('You found my secret easter egg!'),
       className: "btn"
     }, /*#__PURE__*/React.createElement("img", {
       className: "img-fluid",
@@ -45,7 +47,7 @@ class Bedroom extends React.Component {
     }), /*#__PURE__*/React.createElement("div", {
       className: "col-2 btn"
     }, /*#__PURE__*/React.createElement("button", {
-      onclick: "david.sleep()",
+      onClick: () => david.sleep(),
       className: "btn"
     }, /*#__PURE__*/React.createElement("img", {
       className: "img-fluid",
@@ -57,7 +59,7 @@ class Bedroom extends React.Component {
     }), /*#__PURE__*/React.createElement("div", {
       className: "col-2 btn"
     }, /*#__PURE__*/React.createElement("button", {
-      onclick: "david.sleep()",
+      onClick: () => david.sleep(),
       className: "btn"
     }, /*#__PURE__*/React.createElement("img", {
       className: "img-fluid",
@@ -69,7 +71,7 @@ class Bedroom extends React.Component {
     }, /*#__PURE__*/React.createElement("div", {
       className: "col-2 btn"
     }, /*#__PURE__*/React.createElement("button", {
-      onclick: "david.sleep()",
+      onClick: () => david.sleep(),
       className: "btn"
     }, /*#__PURE__*/React.createElement("img", {
       className: "img-fluid",
@@ -81,7 +83,7 @@ class Bedroom extends React.Component {
     }), /*#__PURE__*/React.createElement("div", {
       className: "col-2 btn"
     }, /*#__PURE__*/React.createElement("button", {
-      onclick: "david.sleep()",
+      onClick: () => david.sleep(),
       className: "btn"
     }, /*#__PURE__*/React.createElement("img", {
       className: "img-fluid",

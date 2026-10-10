@@ -1,13 +1,13 @@
 class Bedroom extends React.Component {
     render() {
         return(
-            <main>
+            <main className="bedroom">
                 <div id="wall">
                     <div className="row">
                         <div className="col-10">
                         </div>
                         <div className="col-2">
-                            <button onClick="alert('You found my secret easter egg!')" className="btn">
+                            <button onClick={() => alert('You found my secret easter egg!')} className="btn">
                                 <img className="img-fluid" src="bedroom-images/BedroomLogo.webp" alt="BedRoom" />
                             </button>
                         </div>
@@ -34,26 +34,26 @@ class Bedroom extends React.Component {
                     <div className="row">
                         <div className="col-2"></div>
                         <div className="col-2 btn">
-                            <button onclick="david.sleep()" className="btn">
+                            <button onClick={() => david.sleep()} className="btn">
                                 <img className="img-fluid" src="bedroom-images/GoobBedWeb.png" alt="" title="Click Here to sleep!" />
                             </button>
                         </div>
                         <div className="col-4"></div>
                         <div className="col-2 btn">
-                            <button onclick="david.sleep()" className="btn">
+                            <button onClick={() => david.sleep()} className="btn">
                                 <img className="img-fluid" src="bedroom-images/GoobBedWeb.png" alt="" title="Click Here to sleep!" />
                             </button>
                         </div>
                     </div>
                     <div className="row">
                         <div className="col-2 btn">
-                            <button onclick="david.sleep()" className="btn">
+                            <button onClick={() => david.sleep()} className="btn">
                                 <img className="img-fluid" src="bedroom-images/GoobBedWeb.png" alt="" title="Click Here to sleep!" />
                             </button>
                         </div>
                         <div className="col-8"></div>
                         <div className="col-2 btn">
-                            <button onclick="david.sleep()" className="btn">
+                            <button onClick={() => david.sleep()} className="btn">
                                 <img className="img-fluid" src="bedroom-images/GoobBedWeb.png" alt="" title="Click Here to sleep!" />
                             </button>
                         </div>

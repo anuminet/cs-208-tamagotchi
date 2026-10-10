@@ -43,12 +43,7 @@ function resetGame() {
     // Pause for a quarter second to let the player know they died
     // Then send the player back to the game room
     setTimeout(() => {
-        if(document.referrer.includes("game-room.html")) {
-            // Came from game room; go back
-            history.back();
-        } else {
-            window.location.href = "./game-room.html";
-        }
+        // load("gameRoom");
     }, 250);
 }
 function keypress(e) {

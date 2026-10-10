@@ -1,8 +1,11 @@
 "use strict";
 
-class GameRoom {
+class GameRoom extends React.Component {
   render() {
-    return /*#__PURE__*/React.createElement("main", null, /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/React.createElement("main", {
+      id: "main",
+      className: "game-room"
+    }, /*#__PURE__*/React.createElement("div", {
       className: "bg-primary text-white"
     }, "Game room"), /*#__PURE__*/React.createElement("div", {
       className: "container",
@@ -37,15 +40,15 @@ class GameRoom {
       "data-bs-dismiss": "modal"
     })), /*#__PURE__*/React.createElement("div", {
       className: "modal-body"
-    }, /*#__PURE__*/React.createElement("a", {
+    }, /*#__PURE__*/React.createElement("div", {
       type: "button",
       className: "btn menu-button w-100 mb-3",
       href: "snake-game.html?width=10&height=10"
-    }, /*#__PURE__*/React.createElement("p", null, "10x10")), /*#__PURE__*/React.createElement("a", {
+    }, /*#__PURE__*/React.createElement("p", null, "10x10")), /*#__PURE__*/React.createElement("div", {
       type: "button",
       className: "btn menu-button w-100 mb-3",
       href: "snake-game.html?width=17&height=17"
-    }, /*#__PURE__*/React.createElement("p", null, "17x17")), /*#__PURE__*/React.createElement("a", {
+    }, /*#__PURE__*/React.createElement("p", null, "17x17")), /*#__PURE__*/React.createElement("div", {
       type: "button",
       className: "btn menu-button w-100",
       href: "snake-game.html?width=25&height=25"
@@ -53,10 +56,10 @@ class GameRoom {
       className: "row justify-content-center my-3"
     }, /*#__PURE__*/React.createElement("div", {
       className: "col-3"
-    }, /*#__PURE__*/React.createElement("a", {
+    }, /*#__PURE__*/React.createElement("div", {
       type: "button",
       className: "btn bg-secondary text-white text-lg w-100",
-      href: "flappy-goobert.html"
+      onClick: () => load("flappyGoobert")
     }, /*#__PURE__*/React.createElement("h1", null, "Play Flappy Goobert")))));
   }
 }

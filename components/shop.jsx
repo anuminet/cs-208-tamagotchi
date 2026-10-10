@@ -1,9 +1,18 @@
 "use strict";
 
 class Shop extends React.Component {
+    componentDidMount() {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '../shop-style.css';
+        
+        document.head.appendChild(link);
+        console.log(link);
+    }
+
     render() {
         return(
-            <main>
+            <main id="main" className="shop">
                 
                 {/* <!-- SHOP TITLE --> */}
                 <div className="row">

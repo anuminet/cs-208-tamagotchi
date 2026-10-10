@@ -1,13 +1,23 @@
 "use strict";
 
-class FlappyGoobert {
+class FlappyGoobert extends React.Component {
+
+    componentDidMount() {
+
+    this.script = document.createElement('script');
+    this.script.src = "../games/flappy-goobert.js";
+    this.script.async = true;
+
+    document.body.appendChild(this.script);
+    }
+
     render() {
         return (
-            <div id="main" className="container bg-primary">
+            <main id="main" className="flappy-goobert container bg-primary">
                 <div id="keys" className="d-block d-md-none vw-100">
-                    <i className="bi bi-arrow-up text-white bg-warning p-1 rounded-pill key keyup vw-100" onClick="jump()"></i>
+                    <i className="bi bi-arrow-up text-white bg-warning p-1 rounded-pill key keyup vw-100" onClick={() => jump()}></i>
                 </div>
-            </div>
+            </main>
         );
     }
 }

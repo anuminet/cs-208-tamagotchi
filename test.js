@@ -1,21 +1,25 @@
+"use strict";
+
 /* Basic asset index selectors. */
-let bodyType = 0;
-let bodyColor = 0;
-let legType = 0;
-let legColor = 0;
-let eyeType = 0;
-let eyeExpression = 0;
-let mouthType = 0;
-let mouthExpression = 0;
+let assets = {
+    bodyType: 0,
+    bodyColor: 0,
+    legType: 0,
+    legColor: 0,
+    eyeType: 0,
+    eyeExpression: 0,
+    mouthType: 0,
+    mouthExpression: 0
+}
 
 /* Controls for the test goobert */
 const randomizeFeatures = () => {
-    bodyType = Math.floor(Math.random() * 7);
-    bodyColor = Math.floor(Math.random() * 7);
-    legType = Math.floor(Math.random() * 7);
-    legColor = Math.floor(Math.random() * 7);
-    eyeType = Math.floor(Math.random() * 10);
-    mouthType = Math.floor(Math.random() * 11);
+    assets.bodyType = Math.floor(Math.random() * 7);
+    assets.bodyColor = Math.floor(Math.random() * 7);
+    assets.legType = Math.floor(Math.random() * 7);
+    assets.legColor = Math.floor(Math.random() * 7);
+    assets.eyeType = Math.floor(Math.random() * 10);
+    assets.mouthType = Math.floor(Math.random() * 11);
     setBodyType(bodyType);
     setBodyColor(bodyColor);
     setLegsType(legType);
@@ -66,7 +70,7 @@ const changeMouthExpression = () => {
 /* The following functions set the features of the test goobert. */
 const setBodyType = (assetIndex) => {
     const element = document.getElementById('goobert-body');
-    element.style.backgroundPositionY = (bodyType*(-64)) + 'px';
+    element.style.backgroundPositionY = (assets.bodyType*(-64)) + 'px';
     console.log("Body type set.")
 }
 

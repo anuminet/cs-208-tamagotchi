@@ -1,8 +1,18 @@
 "use strict";
 
 class Shop extends React.Component {
+  componentDidMount() {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '../shop-style.css';
+    document.head.appendChild(link);
+    console.log(link);
+  }
   render() {
-    return /*#__PURE__*/React.createElement("main", null, /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/React.createElement("main", {
+      id: "main",
+      className: "shop"
+    }, /*#__PURE__*/React.createElement("div", {
       className: "row"
     }, /*#__PURE__*/React.createElement("div", {
       className: "col text-center"

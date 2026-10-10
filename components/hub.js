@@ -3,7 +3,8 @@
 class Hub extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("main", {
-      className: "background"
+      id: "main",
+      className: "hub"
     }, /*#__PURE__*/React.createElement("div", {
       className: "tree-container"
     }, /*#__PURE__*/React.createElement("img", {
@@ -53,7 +54,7 @@ class Hub extends React.Component {
       alt: "GAME",
       id: "game-door",
       onClick: () => {
-        load("gameroom");
+        load("gameRoom");
       }
     })), /*#__PURE__*/React.createElement("div", {
       className: "shop-door-container"

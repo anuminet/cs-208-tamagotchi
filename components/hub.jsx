@@ -3,7 +3,7 @@
 class Hub extends React.Component {
     render() {
         return (
-            <main className="background">
+            <main id="main" className="hub">
                 <div className="tree-container">
 
                     <img src="hub-images/gooberts_tree.png" 
@@ -26,7 +26,7 @@ class Hub extends React.Component {
                         <img id="goobert-body" src="assets/goobert-parts/Transparent-BG.png"/>
                         <img id="goobert-mouth" src="assets/goobert-parts/Transparent-BG.png"/>
                         <img id="goobert-eyes" src="assets/goobert-parts/Transparent-BG.png"/>
-                    </div> 
+                    </div>
                 </div>
 
                 <div className="sleep-door-container">
@@ -34,7 +34,7 @@ class Hub extends React.Component {
                 </div>
 
                 <div className="game-door-container">
-                    <img src="hub-images/game-door.png" alt="GAME" id="game-door" onClick={() => {load("gameroom")}} />
+                    <img src="hub-images/game-door.png" alt="GAME" id="game-door" onClick={() => {load("gameRoom")}} />
                 </div>
 
                 <div className="shop-door-container">

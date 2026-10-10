@@ -1,4 +1,6 @@
-body {
+.bedroom {
+    min-height: 100vh;
+	min-width: 100vw;
     background-image: url(bedroom-images/GoobertFloor.webp);
 }
 #wall{
