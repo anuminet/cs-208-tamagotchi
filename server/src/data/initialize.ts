@@ -36,7 +36,6 @@ const createGoobertTable = `CREATE TABLE IF NOT EXISTS gooberts (
     name TEXT NOT NULL,
     room TEXT NOT NULL,
 
-    is_mutant INTEGER,
     mutant_type INTEGER,
 
     fullness INTEGER,

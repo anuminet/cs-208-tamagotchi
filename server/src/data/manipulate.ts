@@ -8,14 +8,14 @@ const goobertInsert = db.prepare(`
     INSERT OR IGNORE INTO gooberts (
         user_slot, id, name, room,
 
-        is_mutant, mutant_type, 
+        mutant_type, 
         fullness, entertainment, awakeness, cleanliness,
 
         appearance, accessories
     ) VALUES (
         ?, ?, ?, ?, 
         
-        ?, ?, 
+        ?, 
         ?, ?, ?, ?, 
 
         ?, ?
@@ -26,7 +26,7 @@ export const post = (user_slot: string, goobert: GoobertData) => {
     goobertInsert.run(
         user_slot, goobert.id, goobert.name, goobert.room, 
 
-        goobert.isMutant ? 1 : 0, goobert.mutantType,
+        goobert.mutantType,
         goobert.fullness, goobert.entertainment, goobert.awakeness, goobert.cleanliness,
 
         goobert.appearance, goobert.accessories
@@ -37,7 +37,7 @@ const selectAll = db.prepare(`
     SELECT 
         uid, user_slot, id, name, room,
 
-        is_mutant, mutant_type, 
+        mutant_type, 
         fullness, entertainment, awakeness, cleanliness,
 
         appearance, accessories
@@ -50,13 +50,23 @@ export const get = (user_slot: string) => {
 }
 
 // PUT
+const validProperties = [
+    "room",
+    "mutant_type", 
+    "fullness", 
+    "entertainment", 
+    "awakeness", 
+    "cleanliness",
+    "appearance", 
+    "accessories"
+];
 export const put = (user_slot: string, id: string, property: string, value: number | string) => {
+    if(!validProperties.includes(property)) return;
     const updateOne = db.prepare(`
         UPDATE gooberts
-        SET ${property} = ?
+        SET ${property == "isMutant" ? "is_mutant" : property} = ?
         WHERE user_slot = ? AND id = ?
     `);
-    
     return updateOne.run(value, user_slot, id);
 };
 

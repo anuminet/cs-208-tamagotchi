@@ -1,6 +1,8 @@
 import axios from 'axios';
-import type { Goobert, GoobertProps } from './Goobert';
+import type { Goobert } from './Goobert';
 import { body } from './games/games-global';
+import type { MutantType } from './Mutant';
+import type { Ref } from 'react';
 
 type RequestBody = {
 	pid: string;
@@ -12,7 +14,6 @@ export type GoobertData = {
     room: string;
     id: string;
 
-    isMutant: boolean;
     mutantType: number;
 
     fullness: number;
@@ -23,9 +24,53 @@ export type GoobertData = {
     appearance: string;
     accessories: string;
 };
+export const validProperties = [
+    "room",
+    "mutant_type", 
+    "fullness", 
+    "entertainment", 
+    "awakeness", 
+    "cleanliness",
+    "appearance", 
+    "accessories"
+];
 
 let pid = localStorage.getItem("pid");
 const filePath = "http://localhost:3000";
+
+export type GoobertProps = {
+    room: string;
+    name: any;
+    x?: number;
+    y?: number;
+    id: string;
+    isUi: boolean;
+    styleGoobert?: boolean;
+
+    isMutant: boolean;
+    mutantType?: MutantType;
+
+    bodyType: number;
+    bodyColor: number;
+    legColor: number;
+    legType: number;
+    eyeType: number;
+    mouthType: number;
+    mouthExpression: number;
+    eyeExpression: number;
+
+    hatType: number;
+    hatStyle: number;
+    maskType: number;
+    maskStyle: number;
+    extraType: number;
+    extraStyle: number;
+
+    onGoobertSelected?: Function;
+    className?: string;
+    ref?: Ref<HTMLElement>;
+};
+
 
 export async function getState(pid: string, saveSlot: number): Promise<GoobertProps[] | undefined> {
   try {
@@ -39,13 +84,12 @@ export async function getState(pid: string, saveSlot: number): Promise<GoobertPr
       }
     });
 
-    // Get JSON from localstorage
-    // const json = await localStorage.getItem("saveSlot" + saveSlot);
-    
-    // Get JSON from Server
+    // Get data from Server
     const data = await response.data as GoobertData[];
-    // const data = JSON.parse(json) as GoobertData[];
+    console.log(data);
     const gooberts: GoobertProps[] = data.map((goobert) => {
+      console.log(goobert);
+
       const appearanceArray = goobert.appearance.split("_");
       const appearanceProps = {
         bodyType: parseInt(appearanceArray[0]!),
@@ -57,7 +101,6 @@ export async function getState(pid: string, saveSlot: number): Promise<GoobertPr
         mouthType: parseInt(appearanceArray[6]!),
         mouthExpression: parseInt(appearanceArray[7]!)
       };
-      console.log(goobert.accessories);
       const accessoriesArray = goobert.accessories.split("_");
       const accessoriesProps = {
         hatType: parseInt(accessoriesArray[0]!),
@@ -70,10 +113,13 @@ export async function getState(pid: string, saveSlot: number): Promise<GoobertPr
       delete (goobert as any).appearance;
       delete (goobert as any).accessories;
 
+      const isMutant = (goobert.mutantType != -1);
+
       return {
         ...goobert,
         isUi: false,
         fromServer: true,
+        isMutant: isMutant,
 
         ...appearanceProps,
 
@@ -135,7 +181,7 @@ export async function saveGoobertToDatabase(pid: string, saveSlot: number, goobe
   }
 }
 export async function updateGoobert(pid: string, saveSlot: number, goobertId: string, stat: string, value: number | string) {
-    
+    if(!validProperties.includes(stat)) return;
     const data = {
       goobertId: goobertId,
       stat: stat,
@@ -226,6 +272,7 @@ const getGoobertData = (goobert: Goobert) => {
       room: goobert.room,
       id: goobert.id,
 
+      is_mutant: goobert.isMutant ? 1 : 0,
       isMutant: goobert.isMutant, 
       mutantType: goobert.mutantType ?? -1, 
 

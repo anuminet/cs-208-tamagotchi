@@ -6,6 +6,7 @@ import { getState, saveAccessories, saveGoobertToDatabase, saveState, updateGoob
 import Graveyard from "./components/graveyard";
 import { goobertDeathRattle } from "./components/audio";
 import useServer from "./ServerContext";
+import { type GameState, globalTick } from "./globalTick";
 
 export type GoobertAppearance = {
     bodyType: number;
@@ -74,9 +75,10 @@ interface GoobertContextType {
         y: number,
     ) => void;
 
-    updateRoom: (
+    updateProp: <K extends keyof Goobert>(
         id: string,
-        room: string
+        property: K,
+        value: any
     ) => void;
 
     updateAccessories: (
@@ -135,8 +137,10 @@ export function GoobertProvider({ children }: any) {
     const [deadGooberts, killGooberts] = useState<Goobert[]>([]);
     (window as any).deadGooberts = deadGooberts;
 
+    
     const { pid } = useServer();
-
+    const gameData = useRef({ gooberts, deadGooberts, pid });
+    
     // ==== CENTRALIZED Goobert STAT UPDATES ====
 
     // Update a specific Goobert's stat through React state.
@@ -176,49 +180,22 @@ export function GoobertProvider({ children }: any) {
     // Maintain the upstream ten-second stat depletion interval.
     // Mutated Gooberts do not lose additional stats while imprisoned.
     useEffect(() => {
+        gameData.current = {
+            ...gameData.current,
+            gooberts: gooberts,
+            deadGooberts: deadGooberts,
+            pid: pid
+        };
+    }, [gooberts, deadGooberts, pid])
+    useEffect(() => {
         const interval = window.setInterval(() => {
-            setGooberts(previous => previous.map(goobert => {
-                if (goobert.isMutant) {
-                    return goobert;
-                }
+            if(!gameData.current) return;
+            const state = globalTick(gameData.current);
+            
 
-                const updated = {
-                    ...goobert,
-                    fullness: Math.max(0, goobert.fullness - 1),
-                    awakeness: Math.max(0, goobert.awakeness - 1),
-                    cleanliness: Math.max(0, goobert.cleanliness - 1),
-                    entertainment: Math.max(0, goobert.entertainment - 1)
-                };
-                const saveSlot = localStorage.getItem("currentSlot");
-                if(saveSlot) {
-                    updateGoobert(pid, parseInt(saveSlot), goobert.id, "fullness", goobert.fullness);
-                    updateGoobert(pid, parseInt(saveSlot), goobert.id, "awakeness", goobert.awakeness);
-                    updateGoobert(pid, parseInt(saveSlot), goobert.id, "entertainment", goobert.entertainment);
-                    updateGoobert(pid, parseInt(saveSlot), goobert.id, "cleanliness", goobert.cleanliness);
-                }
-
-                const depleted = (
-                    updated.fullness <= 0 ||
-                    updated.awakeness <= 0 ||
-                    updated.cleanliness <= 0 ||
-                    updated.entertainment <= 0
-                );
-
-                if (depleted && !goobert.isMutant) {
-                    const saveSlot = localStorage.getItem("currentSlot");
-                    if(saveSlot)
-                        updateGoobert(pid, parseInt(saveSlot), goobert.id, "isMutant", 1);
-                    return {
-                        ...updated,
-                        isMutant: true,
-                        mutantType: getMutationType(updated)
-                    };
-                }
-
-                return updated;
-            }));
-        }, 10000);
-
+            setGooberts(state.gooberts);
+            killGooberts(state.deadGooberts);
+        }, 1000 / 60);
         return () => window.clearInterval(interval);
     }, []);
 
@@ -240,6 +217,19 @@ export function GoobertProvider({ children }: any) {
 
             // Remove mutant type because goobert is being cured
             const { mutantType, ...normalGoobert } = goobert;
+
+            const saveSlot = localStorage.getItem("currentSlot");
+            if(saveSlot) {
+                console.log("Curing on server!");
+                updateGoobert(pid, parseInt(saveSlot), goobert.id, "room", rooms.hub);
+                updateGoobert(pid, parseInt(saveSlot), goobert.id, "mutant_type", -1);
+
+                console.log("Setting Stats!");
+                updateStat(goobert.id, "fullness", Math.max(50, goobert.fullness));
+                updateStat(goobert.id, "awakeness", Math.max(50, goobert.awakeness));
+                updateStat(goobert.id, "cleanliness", Math.max(50, goobert.cleanliness));
+                updateStat(goobert.id, "entertainment", Math.max(50, goobert.entertainment));
+            }
 
             return {
                 ...normalGoobert,
@@ -343,8 +333,6 @@ export function GoobertProvider({ children }: any) {
             Object.assign(goobert, stats);
         }
 
-        goobert.id = name + gooberts.length;
-
         if(!fromServer && localStorage.getItem("currentSlot")) {
             const saveSlot = localStorage.getItem("currentSlot");
             saveGoobertToDatabase(pid, parseInt(saveSlot!), goobert);
@@ -371,11 +359,14 @@ export function GoobertProvider({ children }: any) {
             Object.assign(newGoobert, {...goobert});
             // Randomize Position
             newGoobert.x = Math.floor(Math.random() * window.innerWidth);
-            newGoobert.y = Math.floor(Math.random() * window.innerHeight)
+            newGoobert.y = Math.floor(Math.random() * window.innerHeight);
+
+                newGoobert.isMutant = newGoobert.fullness <= 0 || newGoobert.awakeness <= 0 || newGoobert.cleanliness <= 0 || newGoobert.entertainment <= 0;
 
             return newGoobert;
         });
         
+        gameData.current.gooberts = newGooberts;
         setGooberts(newGooberts);
         killGooberts([]);
 
@@ -424,16 +415,16 @@ export function GoobertProvider({ children }: any) {
         // Update gooberts array with new position
         setGooberts(newArray);
     }
-    const updateRoom = (id: string, room: string) => {
-        let newArray = [...gooberts];
+    const updateProp = <K extends keyof Goobert>(id: string, property: K, value: any) => {
+        let newArray: Goobert[] = [...gooberts];
         // Update goobert position
         for(let goobert of newArray) {
             if(goobert.id == id) {
-                goobert.room = room;
+                goobert[property] = value;
 
                 const saveSlot = localStorage.getItem("currentSlot");
                 if(saveSlot) {
-                    updateGoobert(pid, parseInt(saveSlot), id, "room", room);
+                    updateGoobert(pid, parseInt(saveSlot), id, property, value);
                 }
             }
         }
@@ -483,7 +474,7 @@ export function GoobertProvider({ children }: any) {
         <GoobertContext.Provider value={{
             gooberts, deadGooberts,
             
-            createGoobert, updatePosition, updateRoom, updateAccessories, updateStat,
+            createGoobert, updatePosition, updateProp, updateAccessories, updateStat,
             getGoobertById, cureGoobert, summonGoobertsToHub,
             loadSlot, newGame, kill,
             
@@ -499,13 +490,13 @@ export function renderGoobert(
 	x = (Math.random() * (window.innerWidth - 64) /* world width */),
 	y = ((Math.random() * (window.innerHeight - 550 - 64) /* world height */)) + 550,
     isUi = false,
-) {
+): Goobert {
 	let goobert = {
         name: name,
         x: x,
         y: y,
         room: location,
-        id: name,
+        id: name + new Date().getTime(), // unique identifier
 
         isMutant: false,
         MutantType: undefined,
@@ -544,7 +535,7 @@ export function renderGoobert(
             this.awakeness = 100;
         },
 
-        // Entertainment is earned through minigames.
+        // Entertainment is earned threnderGorough minigames.
         entertain(quality: number) {
             this.entertainment = Math.min(100, this.entertainment + quality);
         },
@@ -555,7 +546,12 @@ export function renderGoobert(
 
         onGoobertSelected: (goobert: Goobert) => {
             // Setup by TopElement
-        }
+        },
+
+        sleepTime: 0, 
+        isDragged: false, 
+        waitTime: 20, 
+        target: null
     }
 
     return goobert;

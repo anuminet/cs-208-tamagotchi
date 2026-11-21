@@ -9,7 +9,7 @@ import { Howl } from "howler";
 export const indexMusic = new Howl({
     src: [assetPath("audio/music/goobie-themesong.mp3")],
     loop: true,
-    volume: 1.0
+    volume: 0.5
 });
 
 // Background music for the Hub and its rooms.

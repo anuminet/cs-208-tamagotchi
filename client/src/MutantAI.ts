@@ -45,11 +45,11 @@ export function catchGoobert(
     goobertX: number,
     goobertY: number 
 ): boolean {
-    // Distance from the center of goobert
-    const distanceX = (mutantX - (goobertX + 32)); 
-    const distanceY = (mutantY - (goobertY + 32));
+    // Distance from goobert
+    const distanceX = ((mutantX) - (goobertX)); 
+    const distanceY = ((mutantY) - (goobertY));
 
     const distance = Math.hypot(distanceY, distanceX);
 
-    return distance < 64;
+    return distance < 15;
 }
