@@ -1,12 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState, type RefObject } from "react";
-import type { Goobert } from "./Goobert";
+import type { Corpse, Goobert } from "./Goobert";
 import { rooms } from "./App";
 import { MutantType } from "./Mutant";
-import { getState, saveAccessories, saveGoobertToDatabase, saveState, updateGoobert } from "./saveLoadGoobert";
-import Graveyard from "./components/graveyard";
+import { getState, saveAccessories, saveGoobertToDatabase, updateGoobert, updateGoobertProperty } from "./saveLoadGoobert";
 import { goobertDeathRattle } from "./components/audio";
 import useServer from "./ServerContext";
-import { type GameState, globalTick } from "./globalTick";
+import { globalTick } from "./globalTick";
 
 export type GoobertAppearance = {
     bodyType: number;
@@ -41,7 +40,7 @@ const MAX_COLORS = 7;
 
 interface GoobertContextType {
     gooberts: Goobert[];
-    deadGooberts: Goobert[];
+    deadGooberts: Corpse[];
     cureGoobert: (id: string) => void;
     summonGoobertsToHub: () => void;
     // captureGoobert: (id: string) => void;
@@ -134,11 +133,11 @@ export function GoobertProvider({ children }: any) {
     const [gooberts, setGooberts] = useState<Goobert[]>([]);
     (window as any).gooberts = gooberts;
 
-    const [deadGooberts, killGooberts] = useState<Goobert[]>([]);
+    const [deadGooberts, killGooberts] = useState<Corpse[]>([]);
     (window as any).deadGooberts = deadGooberts;
 
     
-    const { pid } = useServer();
+    let { pid } = useServer();
     const gameData = useRef({ gooberts, deadGooberts, pid });
     
     // ==== CENTRALIZED Goobert STAT UPDATES ====
@@ -191,10 +190,15 @@ export function GoobertProvider({ children }: any) {
         const interval = window.setInterval(() => {
             if(!gameData.current) return;
             const state = globalTick(gameData.current);
-            
 
-            setGooberts(state.gooberts);
-            killGooberts(state.deadGooberts);
+            
+            // Update gooberts if there are gooberts to update. This helps prevent overwriting failed save loading from servers
+            if(state.gooberts.length > 0 || gooberts.length > 0)
+                setGooberts(state.gooberts);
+
+            if(state.deadGooberts.length != gameData.current.deadGooberts.length) {
+                killGooberts(state.deadGooberts);
+            }
         }, 1000 / 60);
         return () => window.clearInterval(interval);
     }, []);
@@ -217,31 +221,26 @@ export function GoobertProvider({ children }: any) {
 
             // Remove mutant type because goobert is being cured
             const { mutantType, ...normalGoobert } = goobert;
-
-            const saveSlot = localStorage.getItem("currentSlot");
-            if(saveSlot) {
-                console.log("Curing on server!");
-                updateGoobert(pid, parseInt(saveSlot), goobert.id, "room", rooms.hub);
-                updateGoobert(pid, parseInt(saveSlot), goobert.id, "mutant_type", -1);
-
-                console.log("Setting Stats!");
-                updateStat(goobert.id, "fullness", Math.max(50, goobert.fullness));
-                updateStat(goobert.id, "awakeness", Math.max(50, goobert.awakeness));
-                updateStat(goobert.id, "cleanliness", Math.max(50, goobert.cleanliness));
-                updateStat(goobert.id, "entertainment", Math.max(50, goobert.entertainment));
-            }
-
-            return {
+            const newGoobert = {
                 ...normalGoobert,
                 isMutant: false,
                 room: rooms.hub,
                 x: 100 + Math.random() * 180,
                 y: 450,
+
                 fullness: Math.max(50, goobert.fullness),
                 awakeness: Math.max(50, goobert.awakeness),
                 cleanliness: Math.max(50, goobert.cleanliness),
                 entertainment: Math.max(50, goobert.entertainment)
             };
+
+            const saveSlot = localStorage.getItem("currentSlot");
+            if(saveSlot) {
+                if(!pid) pid = localStorage.getItem("pid")!;
+                updateGoobert(pid, parseInt(saveSlot), newGoobert);
+            }
+
+            return newGoobert;
         }));
     }, []);
 
@@ -353,7 +352,7 @@ export function GoobertProvider({ children }: any) {
             return;
         }
 
-        let newGooberts = data.map(goobert => {
+        let newGooberts = data.gooberts.map(goobert => {
             let newGoobert: Goobert = renderGoobert(goobert.name, goobert.room);
             // Populate saved properties
             Object.assign(newGoobert, {...goobert});
@@ -368,8 +367,13 @@ export function GoobertProvider({ children }: any) {
         
         gameData.current.gooberts = newGooberts;
         setGooberts(newGooberts);
-        killGooberts([]);
-
+        if(data.deadGooberts) {
+            gameData.current.deadGooberts = data.deadGooberts;
+            killGooberts(data.deadGooberts);
+        } else {
+            killGooberts([]);
+        }
+        
         // Set most recently loaded slot to activate on page reload
         localStorage.setItem("currentSlot", saveSlot.toString());
     }
@@ -424,7 +428,7 @@ export function GoobertProvider({ children }: any) {
 
                 const saveSlot = localStorage.getItem("currentSlot");
                 if(saveSlot) {
-                    updateGoobert(pid, parseInt(saveSlot), id, property, value);
+                    updateGoobertProperty(pid, parseInt(saveSlot), id, property, value);
                 }
             }
         }
@@ -548,7 +552,7 @@ export function renderGoobert(
             // Setup by TopElement
         },
 
-        sleepTime: 0, 
+        sleeping: 0, 
         isDragged: false, 
         waitTime: 20, 
         target: null

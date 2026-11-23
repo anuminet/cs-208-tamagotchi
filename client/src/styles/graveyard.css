@@ -20,6 +20,7 @@
     position: relative;
     display: inline-block;
     margin: 5px;
+    cursor: pointer;
 }
 
 .etching {
@@ -44,6 +45,21 @@
 .cemetary-container{
     position: absolute;
     margin-top: 15em;
+    width: 95%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.prevGraveArrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    left: 1em;
+}
+.nextGraveArrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    right: 1em;
 }
 
 

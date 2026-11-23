@@ -1,6 +1,7 @@
 "use strict";
-import React, { useState, type MouseEventHandler, type PointerEvent } from "react";
+import React, { useEffect, useReducer, useRef, useState, type MouseEventHandler, type PointerEvent } from "react";
 import GoobertElement, { type Goobert } from "../Goobert";
+import useGooberts from "../GoobertContext";
 
 /* TODO: 
  - change the goobert to match the appearance of the clicked goobert
@@ -37,34 +38,34 @@ export default function UIGoobertCard({goobert, onUiClose}: UIProps): React.JSX.
     );
 
     /* Will trigger only for a particular instance of a goobert when the sprite is clicked */
-        let handleMouseStart = (mouse: PointerEvent) => {    
-            if((mouse.target as HTMLElement).id == "ui-card-xbutton") return;
-            mouse.currentTarget.setPointerCapture(mouse.pointerId);
-    
-            initStartPos(
-                {
-                    x: x, 
-                    y: y,
-                    mouseDX: mouse.clientX - x,
-                    mouseDY:  mouse.clientY - y
-                }
-            );
-            setIsDragged(true);
-        }
-        // Drags gooberts as the mouse moves
-        let handleMouseOver = (mouse: PointerEvent) => {
-            if(!isDragged) return; // Don't drag gooberts that have not been clicked on
-    
-            move(
-                mouse.clientX - startPos.mouseDX,
-                mouse.clientY - startPos.mouseDY
-            )
-        }
-        // Stop goobert from being dragged and open ui card if not dragged
-        let handleMouseEnd = (mouse: PointerEvent) => {
-            mouse.preventDefault();            
-            setIsDragged(false);
-        }
+    let handleMouseStart = (mouse: PointerEvent) => {    
+        if((mouse.target as HTMLElement).id == "ui-card-xbutton") return;
+        mouse.currentTarget.setPointerCapture(mouse.pointerId);
+
+        initStartPos(
+            {
+                x: x, 
+                y: y,
+                mouseDX: mouse.clientX - x,
+                mouseDY:  mouse.clientY - y
+            }
+        );
+        setIsDragged(true);
+    }
+    // Drags gooberts as the mouse moves
+    let handleMouseOver = (mouse: PointerEvent) => {
+        if(!isDragged) return; // Don't drag gooberts that have not been clicked on
+
+        move(
+            mouse.clientX - startPos.mouseDX,
+            mouse.clientY - startPos.mouseDY
+        )
+    }
+    // Stop goobert from being dragged and open ui card if not dragged
+    let handleMouseEnd = (mouse: PointerEvent) => {
+        mouse.preventDefault();            
+        setIsDragged(false);
+    }
 
 
     if(savedGoobert != goobert.id) {
@@ -72,7 +73,6 @@ export default function UIGoobertCard({goobert, onUiClose}: UIProps): React.JSX.
         setY(goobert.y);
         updateSavedGoobert(goobert.id);
     }
-
     return (
         <div 
             className="info-card" 

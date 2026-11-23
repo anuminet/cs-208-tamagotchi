@@ -21,6 +21,10 @@ export function ServerProvider({ children }: any) {
         setWs(new WebSocket('http://localhost:3000'));
         setInitialized(true);
     }
+
+    useEffect(() => {
+        if(localStorage.getItem("pid")) setPid(localStorage.getItem("pid")!);
+    }, []);
     
 
     useEffect(() => {

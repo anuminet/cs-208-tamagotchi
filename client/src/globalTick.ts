@@ -1,13 +1,14 @@
 import { rooms } from "./App";
-import { SPRITE_SIZE, type Goobert } from "./Goobert"
-import { arrived, randomTarget, step, type Bounds } from "./GoobertAI";
+import { goobertDeathRattle } from "./components/audio";
+import { SPRITE_SIZE, type Corpse, type Goobert } from "./Goobert"
+import { arrived, randomTarget, step, type Bounds, type Point } from "./GoobertAI";
 import { MutantType } from "./Mutant";
 import { catchGoobert, chooseGoobert, findGoobert, getMutantSpeed } from "./MutantAI";
-import { updateGoobert } from "./saveLoadGoobert";
+import { sendKill, updateGoobert, updateGoobertProperty } from "./saveLoadGoobert";
 
 export type GameState = {
     gooberts: Goobert[],
-    deadGooberts: Goobert[],
+    deadGooberts: Corpse[],
 
     pid?: string,
     saveSlot?: number
@@ -20,7 +21,7 @@ const GROUND_LIMIT = 350; // Minimum Y value for goobert wandering
 let drainTimer = DRAIN_TIME;
 
 let newGooberts: Goobert[] = [];
-let newDeadGooberts: Goobert[] = [];
+let newDeadGooberts: Corpse[] = [];
 /**
  * Updates gooberts and returns the new gooberts upon update being completed
  * 
@@ -79,10 +80,10 @@ const drainGooberts = (pid: string | undefined) => {
         };
         const saveSlot = localStorage.getItem("currentSlot");
         if(saveSlot && pid) {
-            updateGoobert(pid, parseInt(saveSlot), goobert.id, "fullness", goobert.fullness);
-            updateGoobert(pid, parseInt(saveSlot), goobert.id, "awakeness", goobert.awakeness);
-            updateGoobert(pid, parseInt(saveSlot), goobert.id, "entertainment", goobert.entertainment);
-            updateGoobert(pid, parseInt(saveSlot), goobert.id, "cleanliness", goobert.cleanliness);
+            updateGoobertProperty(pid, parseInt(saveSlot), goobert.id, "fullness", goobert.fullness);
+            updateGoobertProperty(pid, parseInt(saveSlot), goobert.id, "awakeness", goobert.awakeness);
+            updateGoobertProperty(pid, parseInt(saveSlot), goobert.id, "entertainment", goobert.entertainment);
+            updateGoobertProperty(pid, parseInt(saveSlot), goobert.id, "cleanliness", goobert.cleanliness);
         }
         
         const depleted = (
@@ -93,15 +94,18 @@ const drainGooberts = (pid: string | undefined) => {
         );
         
         if (depleted && !goobert.isMutant) {
-            const saveSlot = localStorage.getItem("currentSlot");
-            if(saveSlot && pid) {
-                updateGoobert(pid, parseInt(saveSlot), goobert.id, "mutant_type", getMutationType(updated));
-            }
-            return {
+            const newGoobert = {
                 ...updated,
                 isMutant: true,
                 mutantType: getMutationType(updated)
             };
+            
+            const saveSlot = localStorage.getItem("currentSlot");
+            if(saveSlot && pid) {
+                updateGoobert(pid, parseInt(saveSlot), newGoobert);
+            }
+
+            return newGoobert;
         }
         
         return updated;
@@ -160,21 +164,25 @@ const getWanderBounds = (goobert: Goobert): Bounds => {
 };
 function goobertTick(goobert: Goobert): Goobert {
     // MUTANT AI TO CHASE GOOBERTS
-    if(!goobert.mutantType) goobert.mutantType = getMutationType(goobert);
-    if (goobert.isMutant && goobert.mutantType !== undefined) {
+    if (goobert.isMutant) {
+        if(!goobert.mutantType) goobert.mutantType = getMutationType(goobert);
         return mutantTick(goobert);
     }
 
-    if(goobert.sleepTime > 0) { // Don't wander while sleeping
+    if(goobert.sleeping > 0) { // Don't wander while sleeping
         goobert.eyeExpression = (eyeEmotions.bored);
-        goobert.awakeness = 100;
+        goobert.awakeness = Math.min(100, goobert.awakeness + 0.01);
+
+        // Save sleeping data to server
+        const saveSlot = localStorage.getItem("currentSlot");
+        const pid = localStorage.getItem("pid");
+        // Update awakeness on the server such that only one update is sent per integer increase in awakeness
+        if(saveSlot && pid && (goobert.awakeness - Math.floor(goobert.awakeness)) < 0.01 && goobert.awakeness != 100)
+            updateGoobertProperty(pid, parseInt(saveSlot), goobert.id, "awakeness", Math.floor(goobert.awakeness));
+        
         return goobert;
     }
-
-    if (!goobert.isMutant) {
-        handleEmotion(goobert.id);
-    }
-
+    handleEmotion(goobert.id);
 
     // Skip wandering behavior if the Goobert is being dragged or waiting.
     if (goobert.isDragged) {
@@ -198,13 +206,13 @@ function goobertTick(goobert: Goobert): Goobert {
 
     // Move the Goobert towards the current target. 
     // If it has arrived, reset the target and set a new wait time.
-    if (arrived({x: goobert.x, y: goobert.y}, goobert.target)) {
+    if (arrived({x: goobert.x, y: goobert.y}, goobert.target as Point)) {
         goobert.target = null;
         goobert.waitTime = 20 + Math.floor(Math.random() * 60);
         return goobert;
     }
 
-    const next = step({x: goobert.x, y: goobert.y}, goobert.target, GOOBERT_VELOCITY);
+    const next = step({x: goobert.x, y: goobert.y}, goobert.target as Point, GOOBERT_VELOCITY);
     const worked = move(goobert, next.x, next.y);
 
     // If the move was unsuccessful due to boundaries, reset the target 
@@ -222,6 +230,16 @@ const handleEmotion = (id: string) => {
 
     goobert.eyeExpression = 0; 
     goobert.mouthExpression = 0;
+
+    // Goobert gets excited when another friendly Goobert is in the same room
+    if (newGooberts.some(other =>
+        !other.isMutant &&
+        other.id !== goobert.id &&
+        other.room === goobert.room
+    )) {
+        goobert.eyeExpression = (eyeEmotions.excited);
+        goobert.mouthExpression = (mouthEmotions.happy);
+    }
 
     if(
         (goobert.awakeness + goobert.cleanliness + 
@@ -258,15 +276,6 @@ const handleEmotion = (id: string) => {
         goobert.eyeExpression = (eyeEmotions.sad);
     }
 
-    // Goobert gets excited when another friendly Goobert is in the same room
-    if (newGooberts.some(other =>
-        !other.isMutant &&
-        other.id !== goobert.id &&
-        other.room === goobert.room
-    )) {
-        goobert.eyeExpression = (eyeEmotions.excited);
-        goobert.mouthExpression = (mouthEmotions.happy);
-    }
 
     // Goobert becomes angry when very hungry
     if (goobert.fullness < 20) {
@@ -418,22 +427,19 @@ const mutantTick = (goobert: Goobert) => {
     const targets = findGoobert(newGooberts, goobert.id, goobert.room);
 
     // Determine previous target Goobert available to chase
-    let target = targets.find(goobert => goobert.id === goobert.target?.id);
+    let target = getGoobertById(goobert.target as string ?? "", newGooberts);
 
     // Randomly choose another Goobert to chase
     if (!target) {
         target = chooseGoobert(targets) ?? undefined
-        if(goobert.target) {
-            goobert.target.id = target?.id ?? null;
-            goobert.target.id = target?.id ?? null;
-        }
+        goobert.target = target?.id ?? null;
     }
 
     // Mutant chases target Goobert
     if (target) {
         const speed = getMutantSpeed(goobert.mutantType!);
         const next = step({x: goobert.x, y: goobert.y}, {x: target.x, y: target.y}, speed);
-        move(goobert, next.x, next.y); 
+        move(goobert, next.x, next.y);
     }
 
     // Find Gooberts in same room
@@ -446,6 +452,12 @@ const mutantTick = (goobert: Goobert) => {
         if(catchGoobert(mutant.x, mutant.y, target.x, target.y)) {
             newGooberts.splice(newGooberts.indexOf(target), 1);
             newDeadGooberts.push(target);
+            goobertDeathRattle.play();
+
+            const pid = localStorage.getItem("pid");
+            const saveSlot = localStorage.getItem("currentSlot");
+            if(pid && saveSlot)
+                sendKill(pid, parseInt(saveSlot), target);
         }
     }
 

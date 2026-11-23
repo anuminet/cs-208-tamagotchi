@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Goobert } from './Goobert';
+import type { Corpse, Goobert } from './Goobert';
 import { body } from './games/games-global';
 import type { MutantType } from './Mutant';
 import type { Ref } from 'react';
@@ -14,7 +14,8 @@ export type GoobertData = {
     room: string;
     id: string;
 
-    mutantType: number;
+    is_mutant: number;
+    mutant_type: number;
 
     fullness: number;
     entertainment: number;
@@ -23,6 +24,13 @@ export type GoobertData = {
 
     appearance: string;
     accessories: string;
+
+    sleeping: number;
+};
+export type CorpseData = {
+    name: string;
+    id: string;
+    appearance: string;
 };
 export const validProperties = [
     "room",
@@ -32,7 +40,8 @@ export const validProperties = [
     "awakeness", 
     "cleanliness",
     "appearance", 
-    "accessories"
+    "accessories",
+    "sleeping"
 ];
 
 let pid = localStorage.getItem("pid");
@@ -72,7 +81,7 @@ export type GoobertProps = {
 };
 
 
-export async function getState(pid: string, saveSlot: number): Promise<GoobertProps[] | undefined> {
+export async function getState(pid: string, saveSlot: number) {
   try {
     const params = new URLSearchParams({
       pid: pid,
@@ -85,9 +94,9 @@ export async function getState(pid: string, saveSlot: number): Promise<GoobertPr
     });
 
     // Get data from Server
-    const data = await response.data as GoobertData[];
-    console.log(data);
-    const gooberts: GoobertProps[] = data.map((goobert) => {
+    const data = await response.data;
+    console.log(`Data: `, data);
+    const gooberts: GoobertProps[] = data.gooberts ? data.gooberts.map((goobert: GoobertData) => {
       console.log(goobert);
 
       const appearanceArray = goobert.appearance.split("_");
@@ -113,7 +122,8 @@ export async function getState(pid: string, saveSlot: number): Promise<GoobertPr
       delete (goobert as any).appearance;
       delete (goobert as any).accessories;
 
-      const isMutant = (goobert.mutantType != -1);
+      const isMutant = goobert.is_mutant == 1;
+      delete (goobert as any).mutant_type;
 
       return {
         ...goobert,
@@ -125,10 +135,33 @@ export async function getState(pid: string, saveSlot: number): Promise<GoobertPr
 
         ...accessoriesProps
       };
-    })
+    }) : [];
+    const deadGooberts: Corpse[] = data.graveyard ? data.graveyard.map((goobert: CorpseData) => {
+      const appearanceArray = goobert.appearance.split("_");
+      const appearanceProps = {
+        bodyType: parseInt(appearanceArray[0]!),
+        bodyColor: parseInt(appearanceArray[1]!),
+        legType: parseInt(appearanceArray[2]!),
+        legColor: parseInt(appearanceArray[3]!),
+        eyeType: parseInt(appearanceArray[4]!),
+        eyeExpression: parseInt(appearanceArray[5]!),
+        mouthType: parseInt(appearanceArray[6]!),
+        mouthExpression: parseInt(appearanceArray[7]!)
+      };
+      delete (goobert as any).appearance;
+
+      return {
+        ...goobert,
+        isUi: false,
+        fromServer: true,
+        isMutant: false,
+
+        ...appearanceProps,
+      };
+    }) : [];
 
     // Return gooberts
-    return gooberts;
+    return {gooberts: gooberts, deadGooberts: deadGooberts};
   } catch(error) {
     // Server not running
     console.log("failed to connect.");
@@ -138,7 +171,7 @@ export async function getState(pid: string, saveSlot: number): Promise<GoobertPr
     if(!json) return;
     const data = JSON.parse(json) as GoobertProps[];
 
-    return data;
+    return {gooberts: data};
   }
 }
 (window as any).getState = getState;
@@ -170,17 +203,35 @@ export async function saveGoobertToDatabase(pid: string, saveSlot: number, goobe
 
   } catch(error) {
     // Server not running
-    console.log("failed to connect.");
     console.log(error);
-
-    const json = await localStorage.getItem("slot" + saveSlot);
-    if(!json) return;
-    const data = JSON.parse(json) as GoobertProps[];
-
-    return data;
   }
 }
-export async function updateGoobert(pid: string, saveSlot: number, goobertId: string, stat: string, value: number | string) {
+export async function sendKill(pid: string, saveSlot: number, goobert: Goobert) {
+  const data = {
+    name: goobert.name,
+    id: goobert.id,
+    appearance: stringifyAppearance(goobert)
+  }
+    const request: RequestBody = {
+      pid: pid,
+      saveSlot: saveSlot,
+      data: data
+    }
+    const json = JSON.stringify(request);
+  try {    
+    const response = await axios.post(`${filePath}/graveyard`, {
+    headers: {
+      Accept: "application/json"
+      },
+      body: json
+    });
+
+  } catch(error) {
+    // Server not running
+    console.log(error);
+  }
+}
+export async function updateGoobertProperty(pid: string, saveSlot: number, goobertId: string, stat: string, value: number | string) {
     if(!validProperties.includes(stat)) return;
     const data = {
       goobertId: goobertId,
@@ -202,19 +253,31 @@ export async function updateGoobert(pid: string, saveSlot: number, goobertId: st
     });
 
   } catch(error) {
-    // Server not running
-    console.log("failed to connect.");
     console.log(error);
+  }
+}
+export async function updateGoobert(pid: string, saveSlot: number, goobert: Goobert) {
+    const data = getGoobertData(goobert);
+    const request: RequestBody = {
+      pid: pid,
+      saveSlot: saveSlot,
+      data: data
+    }
+    const json = JSON.stringify(request);
+  try {    
+    const response = await axios.put(`${filePath}/gooberts`, {
+    headers: {
+      Accept: "application/json"
+      },
+      body: json
+    });
 
-    const json = await localStorage.getItem("slot" + saveSlot);
-    if(!json) return;
-    const data = JSON.parse(json) as GoobertProps[];
-
-    return data;
+  } catch(error) {
+    console.log(error);
   }
 }
 export const saveAccessories = async (pid: string, saveSlot: number, goobert: Goobert) => {
-  await updateGoobert(
+  await updateGoobertProperty(
     pid, 
     saveSlot, 
     goobert.id, 
@@ -222,7 +285,6 @@ export const saveAccessories = async (pid: string, saveSlot: number, goobert: Go
     stringifyAccessories(goobert)
   );
 }
-
 export async function deleteGoobert(pid: string, saveSlot: number, goobertId: number) {
     const data = goobertId;
     const request: RequestBody = {
@@ -254,16 +316,7 @@ export async function deleteGoobert(pid: string, saveSlot: number, goobertId: nu
 
 
 const getGoobertData = (goobert: Goobert) => {
-  const appearance = `
-      ${goobert.bodyType}_
-      ${goobert.bodyColor}_
-      ${goobert.legType}_
-      ${goobert.legColor}_
-      ${goobert.eyeType}_
-      ${goobert.eyeExpression}_
-      ${goobert.mouthType}_
-      ${goobert.mouthExpression}
-    `.replace(/\s+/g, '');
+  const appearance = stringifyAppearance(goobert);
 
     const accessories = stringifyAccessories(goobert);
   
@@ -273,8 +326,8 @@ const getGoobertData = (goobert: Goobert) => {
       id: goobert.id,
 
       is_mutant: goobert.isMutant ? 1 : 0,
-      isMutant: goobert.isMutant, 
-      mutantType: goobert.mutantType ?? -1, 
+      mutant_type: goobert.mutantType ?? -1, 
+      sleeping: goobert.sleeping,
 
       fullness: goobert.fullness, 
       entertainment: goobert.entertainment,
@@ -284,6 +337,18 @@ const getGoobertData = (goobert: Goobert) => {
       appearance: appearance,
       accessories: accessories
     };
+}
+const stringifyAppearance = (goobert: Goobert) => {
+  return `
+      ${goobert.bodyType}_
+      ${goobert.bodyColor}_
+      ${goobert.legType}_
+      ${goobert.legColor}_
+      ${goobert.eyeType}_
+      ${goobert.eyeExpression}_
+      ${goobert.mouthType}_
+      ${goobert.mouthExpression}
+    `.replace(/\s+/g, '');
 }
 
 const stringifyAccessories = (goobert: Goobert) => {

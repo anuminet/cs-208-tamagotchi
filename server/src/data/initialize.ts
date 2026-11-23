@@ -8,7 +8,7 @@ export type GoobertData = {
     room: string;
     id: string;
 
-    isMutant: boolean;
+    is_mutant: boolean;
     mutantType: number;
 
     fullness: number;
@@ -19,6 +19,13 @@ export type GoobertData = {
     appearance: string;
     accessories: string;
 };
+export type CorpseData = {
+    name: string;
+    id: string;
+
+    appearance: string;
+};
+
 
 
 const createUserTable = `CREATE TABLE IF NOT EXISTS users (
@@ -36,7 +43,9 @@ const createGoobertTable = `CREATE TABLE IF NOT EXISTS gooberts (
     name TEXT NOT NULL,
     room TEXT NOT NULL,
 
+    is_mutant INTEGER,
     mutant_type INTEGER,
+    sleeping INTEGER,
 
     fullness INTEGER,
     entertainment INTEGER,
@@ -47,6 +56,15 @@ const createGoobertTable = `CREATE TABLE IF NOT EXISTS gooberts (
     accessories TEXT
 )`;
 db.exec(createGoobertTable);
+const createGraveyardTable = `CREATE TABLE IF NOT EXISTS graveyard (
+    uid INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_slot TEXT,
+    id TEXT NOT NULL,
+    name TEXT NOT NULL,
+
+    appearance TEXT
+)`;
+db.exec(createGraveyardTable);
 
 
 

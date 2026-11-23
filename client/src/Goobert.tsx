@@ -55,26 +55,39 @@ export type Goobert = {
     eyeExpression: number;
     mouthExpression: number;
 
-    hatType: number;
-    hatStyle: number;
-    maskType: number;
-    maskStyle: number;
-    extraType: number;
-    extraStyle: number;
+    hatType?: number;
+    hatStyle?: number;
+    maskType?: number;
+    maskStyle?: number;
+    extraType?: number;
+    extraStyle?: number;
 
-    eat: Function;
-    sleep: Function;
-    entertain: Function;
-    bathe: Function;
+    eat?: Function;
+    sleep?: Function;
+    entertain?: Function;
+    bathe?: Function;
 
-    onGoobertSelected: Function;
+    onGoobertSelected?: Function;
 
     // State variables
-    sleepTime: number;
+    sleeping: number;
     isDragged: boolean;
     waitTime: number;
-    target: {x: number, y: number, id?: string | null} | null // id is for mutants
+    target: {x: number, y: number} | string | null // id is for mutants
 };
+export type Corpse = {
+    name: string;
+    id: string;
+
+    bodyType: number;
+    bodyColor: number;
+    legType: number;
+    legColor: number;
+    eyeType: number;
+    mouthType: number;
+    eyeExpression: number;
+    mouthExpression: number;
+}
 
 /*
  * Tracks the Goobert's current position while dragging.
@@ -368,11 +381,10 @@ export default function Goobert(props: Goobert): React.JSX.Element {
     * pointer moves outside the Goobert's sprite.
     */
     const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-        if (props.sleepTime > 0) {
+        if (props.sleeping > 0) {
             console.log("Why are you poking a sleeping goobert, you monster");
             goobertClickSound.play();
-            if(props.onGoobertSelected) props.onGoobertSelected();
-            return;
+            updateProp(props.id, "sleeping", 0);
         }
         if (props.isUi) return;
 
@@ -503,8 +515,7 @@ export default function Goobert(props: Goobert): React.JSX.Element {
 
     } 
     const goToBed = () =>   {
-        updateProp(props.id, "sleepTime", AI_FPS * 30); // 30 seconds
-        updateStat(props.id, "awakeness", 100);   
+        updateProp(props.id, "sleeping", 1);
     }
 
     

@@ -1,7 +1,7 @@
 import express, { Express, NextFunction, Request, Response } from "express";
 import http from "http";
 import { WebSocket, WebSocketServer } from "ws";
-import { createGoobert, deleteGoobert, getSaveState, updateGoobert } from "./data/dataProvider";
+import { createGoobert, deleteGoobert, getSaveState, postToGraveyard, updateGoobert, updateGoobertProperty } from "./data/dataProvider";
 import Database from "better-sqlite3";
 
 const PORT = process.env.PORT || 3000;
@@ -37,8 +37,23 @@ app.post("/gooberts", async (request: Request, response: Response) =>{
 });
 app.put("/gooberts", async (request: Request, response: Response) =>{
     const req = await JSON.parse(request.body.body);
-    console.log("Updating " + req.data.goobertId + " " + req.data.stat + " to " + req.data.value);
-    const data = await updateGoobert(req);
+    let data: any;
+    if(req.data.goobertId != undefined) { // Update one stat
+        console.log("Updating " + req.data.goobertId + " " + req.data.stat + " to " + req.data.value);
+        data = await updateGoobertProperty(req);
+    } else { // Update all stats
+        console.log("Updating " + req.data.id + ".");
+        data = await updateGoobert(req);
+    }
+
+    response.status(201).json(data);
+});
+app.post("/graveyard", async (request: Request, response: Response) =>{
+    const req = await JSON.parse(request.body.body);
+
+    console.log("Killing " + req.data.id);
+    postToGraveyard(req);
+    const data = await deleteGoobert(req);
 
     response.status(201).json(data);
 });

@@ -1,47 +1,24 @@
-import React, { useState, type MouseEventHandler } from "react"
+import React, { useEffect, useState, type MouseEventHandler } from "react"
 import "../styles/graveyard.css";
 import { doorOpenSound, goobertSpookSound } from "./audio";
 import { load, rooms } from "../App";
-import GoobertElement, {type Goobert} from "../Goobert";
+import GoobertElement, {type Corpse, type Goobert} from "../Goobert";
 import useGooberts, { getDeceased } from "../GoobertContext";
 import UIGoobertCard from "./ui-script";
 
 export default function Graveyard() {
     let { doorRefs } = useGooberts();
-    const deceased = getDeceased();//hmmmm... how do I get the array of dead gooberts here
+    const deceased = getDeceased(); //hmmmm... how do I get the array of dead gooberts here
+    const [deceasedPage, setDeceasedPage] = useState(0);
 
-    interface Props {
-        goobert: Goobert;
-        stoneType: number;
-        
+    const formattedDeceased: Corpse[][] = [];
+    const dist = Math.max(Math.floor(window.innerWidth / 128) - 2, 1);
+    for (let i = 0; i < deceased.length; i += dist) {
+        formattedDeceased.push(deceased.slice(i, i + dist));
     }
-    const Headstone = ({goobert, stoneType}:Props) => {
-        const deadGoobert = goobert;
-        const [isVisible, setVisible] = useState(false);
-
-        return(
-        <div className="Headstone">
-            <img src={`../images/graveyard/headstone${stoneType%3}.webp` } onClick={() => {
-                setVisible(!isVisible);
-                goobertSpookSound.play();
-            }}/>
-            <div className="">
-                {isVisible && (
-                    <div className="">
-                        {/* <div>R.I.P. </div> */}
-                        <GoobertElement
-                                        {...deadGoobert}
-                                        isUi={false}
-                                        x={35}
-                                        y={-20}
-                                        className="goobert-container icon etching"
-                                    />
-                    </div>
-                )}
-            </div>
-            <div className="engraving">{goobert.name}</div>
-        </div>
-    )     
+    const deceasedPages: Corpse[][][] = [];
+    for (let i = 0; i < formattedDeceased.length; i += 2) {
+        deceasedPages.push(formattedDeceased.slice(i, i + 2));
     }
 
     return(
@@ -73,11 +50,25 @@ export default function Graveyard() {
                         <p>No Gooberts have been laid to rest in this session.</p>
                     </div>
                 ) : (
-                    <div className="cemetary-container">
-                        <div className="cemetary-row">
-                            {deceased.map((goobert, i) => <Headstone goobert={goobert} stoneType={i} key={i} />)}
+                    <>
+                        <div className="cemetary-container">
+                            {deceasedPages[deceasedPage]!.map(row => {
+                                return <div className="cemetary-row">
+                                    {row.map((goobert, i) => <Headstone goobert={goobert} stoneType={i} key={i} />)}
+                                </div>
+                            })}
                         </div>
-                    </div>
+                        {deceasedPage  > 0 && 
+                            <img className="prevGraveArrow" src="/images/graveyard/graveyardArrow.webp" 
+                                onClick={() => setDeceasedPage(deceasedPage - 1)}
+                            />
+                        } 
+                        {deceasedPage < deceasedPages.length - 1 && 
+                            <img className="nextGraveArrow" src="/images/graveyard/graveyardArrow.webp" 
+                                onClick={() => setDeceasedPage(deceasedPage + 1)}
+                            />
+                        } 
+                    </>
                     // <div className="graveyard-grid">
                     //     {deadGooberts.map((goobert, index) => (
                     //         <article className="graveyard-memorial" key={`${goobert.id}-${index}`}>
@@ -93,4 +84,57 @@ export default function Graveyard() {
             </section>
         </main>
     );
+}
+interface Props {
+        goobert: Corpse;
+        stoneType: number;
+    }
+    const Headstone = ({goobert, stoneType}:Props) => {
+        const deadGoobert = goobert;
+        const [isVisible, setVisible] = useState(false);
+
+        useEffect(() => {
+            const timeOut = setTimeout(() => {setVisible(false)}, 2000);
+
+            return () => clearInterval(timeOut);
+        }, [isVisible]);
+
+        return(
+        <div className="Headstone" 
+        onPointerDown={() => {
+            console.log("Setting visible");
+            setVisible(!isVisible);
+            goobertSpookSound.play();
+        }}>
+            <img src={`../images/graveyard/headstone${stoneType%3}.webp` } />
+            <div className="">
+                {isVisible && (
+                    <div className="">
+                        {/* <div>R.I.P. </div> */}
+                        <GoobertElement
+                                        {...deadGoobert}
+                                        isUi={true}
+                                        room={rooms.graveyard}
+                                        isMutant={false}
+                                        
+                                        fullness={0}
+                                        entertainment={0}
+                                        cleanliness={0}
+                                        awakeness={0}
+
+                                        sleeping={0}
+                                        isDragged={false}
+                                        waitTime={0}
+                                        target={null}
+
+                                        x={35}
+                                        y={-20}
+                                        className="goobert-container icon etching"
+                                    />
+                    </div>
+                )}
+            </div>
+            <div className="engraving">{goobert.name}</div>
+        </div>
+    )     
 }
